@@ -7,10 +7,10 @@ import {
   AuthResponseSuccess,
 } from "./types.ts";
 
-// ✅ Export `submitChallenge` explicitly
-export { submitChallenge };
-
 export * from "./types.ts";
+
+// ✅ Export `submitChallenge` explicitly
+export { submitChallenge, RobinhoodApi };
 
 export type RobinhoodCredentials = {
   username?: string;

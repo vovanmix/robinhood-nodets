@@ -1,8 +1,8 @@
 import RobinhoodApi from "./api";
 
 export interface RobinhoodOrdersOptions {
-  updated_at?: string;
-  fetchPagesNumber?: number;
+  fetchAfter?: string;
+  fetchMaxPages?: number;
 }
 
 export interface RobinhoodEarningsOptions {
@@ -151,10 +151,12 @@ export interface AuthResponseAwaitingInput {
   authType: string;
 }
 
+export interface TokenData {
+  access_token: string;
+}
+
 export interface AuthResponseSuccess {
   status: string;
-  tokenData: {
-    access_token: string;
-  };
+  tokenData: TokenData;
   api: RobinhoodApi;
 }

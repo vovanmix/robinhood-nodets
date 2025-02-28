@@ -22,6 +22,7 @@ import {
   RobinhoodInvestmentProfile,
   RobinhoodInstrument,
   RobinhoodWatchlist,
+  RobinhoodCryptoHolding,
 } from "./types.ts";
 
 export default class RobinhoodApi {
@@ -74,12 +75,11 @@ export default class RobinhoodApi {
     const url = robinhoodApiBaseUrl + endpoints.orders;
     const params = new URLSearchParams();
     if (options) {
-      if (options.updated_at) {
-        params.set("updated_at[gte]", options.updated_at);
-        delete options.updated_at;
+      if (options.fetchAfter) {
+        params.set("updated_at[gte]", options.fetchAfter);
       }
     }
-    return this._fetchList(url, params, options.fetchPagesNumber);
+    return this._fetchList(url, params, options.fetchMaxPages);
   }
 
   async positions(): Promise<RobinhoodPosition[]> {
@@ -95,7 +95,7 @@ export default class RobinhoodApi {
     return this._fetchList(url, params);
   }
 
-  async crypto_holdings() {
+  async crypto_holdings(): Promise<RobinhoodCryptoHolding[]> {
     const url = cryptoApiBaseUrl + endpoints.crypto_holdings;
     const params = new URLSearchParams();
     return this._fetchList(url, params);
@@ -355,7 +355,13 @@ export default class RobinhoodApi {
     }
   }
 
-  async refresh_token({ refreshToken, deviceToken }: { refreshToken: string; deviceToken: string }): Promise<any> {
+  async refresh_token({
+    refreshToken,
+    deviceToken,
+  }: {
+    refreshToken: string;
+    deviceToken: string;
+  }): Promise<any> {
     // Remove any existing Authorization header as shown in the Python code
     const headers = {
       "Content-Type": "application/x-www-form-urlencoded", // Changed to form-urlencoded
@@ -426,22 +432,22 @@ export default class RobinhoodApi {
    * Fetches a list of items from the API.
    * @param url The URL to fetch the list from.
    * @param params The parameters to pass to the API.
-   * @param fetchPagesNumber The number of pages to fetch. If not provided, only the first page will be fetched.
+   * @param fetchMaxPages The maximum number of pages to fetch. If not provided, only the first page will be fetched.
    * @returns A promise that resolves to an array of items.
    */
   private async _fetchList<T>(
     url: string,
     params?: URLSearchParams,
-    fetchPagesNumber?: number
+    fetchMaxPages?: number
   ): Promise<T[]> {
     const response = await this._fetch<RobinhoodResultResponse<T>>(url, params);
     let data = response.results;
     let nextPage = response.next;
     let pagesFetched = 0;
-    if (fetchPagesNumber === undefined) {
+    if (fetchMaxPages === undefined) {
       return data;
     }
-    while (nextPage && pagesFetched < fetchPagesNumber) {
+    while (nextPage && pagesFetched < fetchMaxPages) {
       const nextResponse = await this._fetch<RobinhoodResultResponse<T>>(
         nextPage,
         new URLSearchParams()
