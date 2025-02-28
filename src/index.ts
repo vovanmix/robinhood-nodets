@@ -10,6 +10,8 @@ import {
 // ✅ Export `submitChallenge` explicitly
 export { submitChallenge };
 
+export * from "./types.ts";
+
 export type RobinhoodCredentials = {
   username?: string;
   password?: string;
