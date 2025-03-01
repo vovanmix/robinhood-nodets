@@ -420,7 +420,12 @@ export default class RobinhoodApi {
    * @returns A promise that resolves to the data.
    */
   private async _fetch<T>(url: string, params?: URLSearchParams): Promise<T> {
-    const response = await fetch(`${url}?${params?.toString()}`, {
+    let urlWithParams = url;
+    const paramsString = params?.toString();
+    if (paramsString) {
+      urlWithParams += `?${paramsString}`;
+    }
+    const response = await fetch(urlWithParams, {
       method: "GET",
       headers: this.headers,
     });
