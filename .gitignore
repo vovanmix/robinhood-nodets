@@ -34,3 +34,4 @@ package-lock.json
 test/robinhood_auth.json
 **/.env
 test/.env
+dist

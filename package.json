@@ -1,16 +1,32 @@
 {
   "name": "robinhood-nodets",
-  "version": "2.0.11",
-  "description": "Comprehensive Node.js API wrapper for the Robinhood private API",
-  "main": "src/index.ts",
+  "version": "1.0.0",
+  "description": "Comprehensive TypeScript API wrapper for the Robinhood private API",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
-    "test": "nyc ava && npm run typescript",
-    "typescript": "tsc --project test/types/tsconfig.json",
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "prepare": "npm run build",
+    "test": "npm run typecheck",
+    "typecheck": "tsc --noEmit",
     "release": "standard-version"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Joshtt23/robinhood-node.git"
+    "url": "https://github.com/vovanmix/robinhood-nodets.git"
   },
   "keywords": [
     "robinhood",
@@ -19,13 +35,15 @@
     "stock",
     "finance"
   ],
-  "author": "Joshua Traver",
+  "author": "vovanmix",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Joshtt23/robinhood-node/issues"
+    "url": "https://github.com/vovanmix/robinhood-nodets/issues"
   },
-  "homepage": "https://github.com/Joshtt23/robinhood-node",
+  "homepage": "https://github.com/vovanmix/robinhood-nodets",
   "devDependencies": {
+    "@types/node-fetch": "^2.6.12",
+    "@types/uuid": "^10.0.0",
     "ava": "^0.17.0",
     "coveralls": "^2.11.15",
     "nyc": "^10.0.0",
@@ -35,6 +53,5 @@
   },
   "dependencies": {
     "node-fetch": "^3.3.1"
-  },
-  "type": "module"
+  }
 }

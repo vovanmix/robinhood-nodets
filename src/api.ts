@@ -4,7 +4,7 @@ import {
   cryptoApiBaseUrl,
   endpoints,
   clientId,
-} from "./constants.ts";
+} from "./constants.js";
 import {
   RobinhoodEarnings,
   RobinhoodOrder,
@@ -23,7 +23,7 @@ import {
   RobinhoodInstrument,
   RobinhoodWatchlist,
   RobinhoodCryptoHolding,
-} from "./types.ts";
+} from "./types.js";
 
 export default class RobinhoodApi {
   private authToken: string;
@@ -133,9 +133,11 @@ export default class RobinhoodApi {
       }),
     });
     if (!response.ok) {
-      throw new Error("Failed to place order: " + JSON.stringify(response));
+      throw new Error(
+        "Failed to place order: " + JSON.stringify(response.json())
+      );
     }
-    return response.json();
+    return (await response.json()) as RobinhoodOrder;
   }
 
   async fundamentals(ticker: string): Promise<RobinhoodFundamentals> {
@@ -279,11 +281,11 @@ export default class RobinhoodApi {
     const currencyPairs = await this.get_currency_pairs();
     const assets = currencyPairs.results;
     const asset = assets.find(
-      (a) => a.asset_currency.code.toLowerCase() === symbol.toLowerCase()
+      (a: any) => a.asset_currency.code.toLowerCase() === symbol.toLowerCase()
     );
 
     if (!asset) {
-      const codes = assets.map((a) => a.asset_currency.code);
+      const codes = assets.map((a: any) => a.asset_currency.code);
       throw new Error(
         "Symbol not found. Only these codes are allowed: " +
           JSON.stringify(codes)
@@ -392,7 +394,7 @@ export default class RobinhoodApi {
       }
 
       const data = await response.json();
-      return { device_token: deviceToken, ...data };
+      return { device_token: deviceToken, ...(data as any) };
     } catch (error) {
       console.error("Error refreshing token:", error);
       throw error;
@@ -418,12 +420,14 @@ export default class RobinhoodApi {
    * @returns A promise that resolves to the data.
    */
   private async _fetch<T>(url: string, params?: URLSearchParams): Promise<T> {
-    const response = await fetch(url, {
+    const response = await fetch(`${url}?${params?.toString()}`, {
+      method: "GET",
       headers: this.headers,
-      params,
     });
     if (!response.ok) {
-      throw new Error("Failed to fetch data: " + JSON.stringify(response));
+      throw new Error(
+        "Failed to fetch data: " + JSON.stringify(await response.json())
+      );
     }
     return (await response.json()) as T;
   }

@@ -1,4 +1,4 @@
-import RobinhoodApi from "./api";
+import RobinhoodApi from "./api.js";
 
 export interface RobinhoodOrdersOptions {
   fetchAfter?: string;
@@ -160,3 +160,10 @@ export interface AuthResponseSuccess {
   tokenData: TokenData;
   api: RobinhoodApi;
 }
+
+export type RobinhoodCredentials = {
+  username?: string;
+  password?: string;
+  token?: string;
+  deviceToken?: string;
+};

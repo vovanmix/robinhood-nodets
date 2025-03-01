@@ -1,7 +1,7 @@
 import fetch from "node-fetch";
-import { robinhoodApiBaseUrl, clientId, endpoints } from "./constants.ts";
+import { robinhoodApiBaseUrl, clientId, endpoints } from "./constants.js";
 import { v4 as uuidv4 } from "uuid";
-import { AuthResponse } from "./types.ts";
+import { RobinhoodCredentials, TokenData } from "./types.js";
 
 const defaultHeaders = {
   Accept: "*/*",
@@ -17,22 +17,81 @@ const defaultHeaders = {
 };
 
 // Store authentication states for tracking ongoing workflows
-const workflowStates = new Map();
+const workflowStates = new Map<string, WorkflowState>();
 
-function saveWorkflowState(id, state) {
+function saveWorkflowState(id: string, state: WorkflowState) {
   workflowStates.set(id, state);
 }
 
-function getWorkflowState(id) {
+function getWorkflowState(id: string) {
   return workflowStates.get(id);
 }
 
-function deleteWorkflowState(id) {
+function deleteWorkflowState(id: string) {
   workflowStates.delete(id);
+}
+interface WorkflowState {
+  workflowId: string;
+  machineId: string;
+  deviceToken: string;
+  challengeId: string;
+  challengeType: string;
+  username?: string;
+  password?: string;
+}
+
+interface LoginResponse {
+  verification_workflow: {
+    id: string;
+  };
+  access_token: string;
+  detail: string;
+}
+
+interface MachineData {
+  id: string;
+}
+
+interface InquiriesResponse {
+  context: {
+    sheriff_challenge: {
+      id: string;
+      type: string;
+    };
+  };
+}
+
+interface SmsResponse {
+  status: string;
+}
+
+interface PollResponse {
+  challenge_status: string;
+}
+
+export type RobinhoodInternalAuthResponse =
+  | RobinhoodInternalAuthResponseSuccess
+  | RobinhoodInternalAuthResponseError;
+
+export interface RobinhoodInternalAuthResponseSuccess {
+  status?: string;
+  tokenData: TokenData;
+  workflow_id?: string;
+  message?: string;
+  authType?: string;
+}
+
+export interface RobinhoodInternalAuthResponseError {
+  status: string;
+  message: string;
+  workflow_id?: string;
+  tokenData?: TokenData;
 }
 
 // **START AUTHENTICATION**
-export async function authenticate(credentials) {
+export async function authenticate(
+  credentials: RobinhoodCredentials
+): Promise<RobinhoodInternalAuthResponse> {
   console.log("🔑 Starting authentication...");
   let { username, password, deviceToken } = credentials;
 
@@ -68,7 +127,7 @@ export async function authenticate(credentials) {
       body: new URLSearchParams(payload as unknown as Record<string, string>),
     });
 
-    const data = await response.json();
+    const data = (await response.json()) as LoginResponse;
     console.log("🔐 Auth Response:", data);
 
     if (data.verification_workflow) {
@@ -87,7 +146,7 @@ export async function authenticate(credentials) {
           }),
         }
       );
-      const machineData = await machineResponse.json();
+      const machineData = (await machineResponse.json()) as MachineData;
       console.log("🤖 Machine Response:", machineData);
       if (!machineData.id) {
         return { status: "error", message: "❌ Machine ID not found!" };
@@ -97,7 +156,8 @@ export async function authenticate(credentials) {
       const inquiriesResponse = await fetch(
         `${robinhoodApiBaseUrl}/pathfinder/inquiries/${machineData.id}/user_view/`
       );
-      const inquiriesData = await inquiriesResponse.json();
+      const inquiriesData =
+        (await inquiriesResponse.json()) as InquiriesResponse;
       console.log("🔍 Inquiries Response:", inquiriesData);
       const challenge = inquiriesData.context?.sheriff_challenge;
       console.log("🛡️ Challenge:", challenge);
@@ -131,11 +191,14 @@ export async function authenticate(credentials) {
     }
 
     if (data.access_token) {
-      return { status: "success", access_token: data.access_token };
+      return {
+        status: "success",
+        tokenData: { access_token: data.access_token },
+      };
     }
 
     return { status: "error", message: data.detail };
-  } catch (error) {
+  } catch (error: any) {
     console.error("⚠️ Auth Error:", error);
     throw new Error(`Authentication failed: ${error.message}`);
   }
@@ -145,7 +208,7 @@ export async function authenticate(credentials) {
 export async function submitChallenge(
   workflowId: string,
   userInput?: string
-): Promise<AuthResponse> {
+): Promise<RobinhoodInternalAuthResponse> {
   const state = getWorkflowState(workflowId);
   if (!state) throw new Error("❌ Invalid workflow ID!");
 
@@ -164,7 +227,7 @@ export async function submitChallenge(
         }
       );
 
-      const smsData = await smsResponse.json();
+      const smsData = (await smsResponse.json()) as SmsResponse;
       if (smsData.status !== "validated") {
         throw new Error("❌ SMS validation failed!");
       }
@@ -176,7 +239,7 @@ export async function submitChallenge(
           headers: defaultHeaders,
         }
       );
-      const pollData = await pollResponse.json();
+      const pollData = (await pollResponse.json()) as PollResponse;
       console.log("🛂 Poll Response:", pollData);
 
       if (pollData.challenge_status !== "validated") {
@@ -192,7 +255,9 @@ export async function submitChallenge(
 }
 
 // **FINALIZE AUTHENTICATION**
-export async function finalizeAuthentication(state) {
+export async function finalizeAuthentication(
+  state: WorkflowState
+): Promise<RobinhoodInternalAuthResponse> {
   console.log("✅ Challenge validated! Sending final approval...");
 
   // ✅ Step 1: Send a POST request to finalize the verification
@@ -234,10 +299,10 @@ export async function finalizeAuthentication(state) {
       username: state.username,
       password: state.password,
       long_session: "true",
-    }),
+    } as any),
   });
 
-  const tokenData = await tokenResponse.json();
+  const tokenData = (await tokenResponse.json()) as TokenData;
   console.log("🔑 Auth Token Response:", tokenData);
 
   if (!tokenData.access_token) {
@@ -246,5 +311,5 @@ export async function finalizeAuthentication(state) {
 
   deleteWorkflowState(state.workflowId); // ✅ Clean up workflow state
 
-  return { status: "success", deviceToken: state.deviceToken, ...tokenData };
+  return { status: "success", tokenData };
 }

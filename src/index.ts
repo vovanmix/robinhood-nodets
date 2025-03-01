@@ -1,28 +1,27 @@
-import { authenticate, submitChallenge } from "./auth.ts";
-import RobinhoodApi from "./api.ts";
+import {
+  authenticate,
+  RobinhoodInternalAuthResponse,
+  submitChallenge,
+} from "./auth.js";
+import RobinhoodApi from "./api.js";
 import {
   AuthResponse,
   AuthResponseAwaitingInput,
   AuthResponseError,
   AuthResponseSuccess,
-} from "./types.ts";
+  RobinhoodCredentials,
+} from "./types.js";
 
-export * from "./types.ts";
+export * from "./types.js";
 
 // ✅ Export `submitChallenge` explicitly
 export { submitChallenge, RobinhoodApi };
-
-export type RobinhoodCredentials = {
-  username?: string;
-  password?: string;
-  token?: string;
-};
 
 export default async function Robinhood(
   credentials: RobinhoodCredentials
 ): Promise<AuthResponse> {
   try {
-    let authResponse;
+    let authResponse: RobinhoodInternalAuthResponse;
 
     if (credentials.token) {
       console.log("✅ Using provided token...");
@@ -35,11 +34,11 @@ export default async function Robinhood(
         let authType = "unknown";
 
         if (
-          authResponse.message.includes("SMS") ||
-          authResponse.message.includes("Authenticator")
+          authResponse.message?.includes("SMS") ||
+          authResponse.message?.includes("Authenticator")
         ) {
           authType = "mfa";
-        } else if (authResponse.message.includes("Confirm device approval")) {
+        } else if (authResponse.message?.includes("Confirm device approval")) {
           authType = "device_confirmation";
         }
 
@@ -53,7 +52,7 @@ export default async function Robinhood(
 
       if (
         authResponse.status !== "success" ||
-        !authResponse.tokenData.access_token
+        !authResponse.tokenData?.access_token
       ) {
         return {
           status: "error",
@@ -62,6 +61,10 @@ export default async function Robinhood(
       }
 
       console.log("✅ Authentication successful!");
+    }
+
+    if (!authResponse.tokenData?.access_token) {
+      throw new Error("❌ Authentication failed!: No access token provided");
     }
 
     // ✅ Always ensure API instance is included

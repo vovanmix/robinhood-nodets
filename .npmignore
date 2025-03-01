@@ -7,3 +7,10 @@ test
 .gitignore
 **/.env
 examples
+coverage/
+.nyc_output/
+*.log
+tsconfig.json
+.DS_Store
+CHANGELOG.md
+AUTHORS
