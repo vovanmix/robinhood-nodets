@@ -186,7 +186,7 @@ export default class RobinhoodApi {
     );
   }
 
-  async cancel_order(order: string | RobinhoodOrder): Promise<RobinhoodOrder> {
+  async cancel_order(order: string | RobinhoodOrder): Promise<boolean> {
     let cancelUrl;
     if (typeof order === "string") {
       cancelUrl =
@@ -195,7 +195,12 @@ export default class RobinhoodApi {
       cancelUrl = order.cancel;
     }
     if (cancelUrl) {
-      return this._post<null, RobinhoodOrder>(cancelUrl, null);
+      try {
+        await this._post<null, {}>(cancelUrl, null);
+        return true;
+      } catch (error) {
+        return false;
+      }
     } else {
       if (typeof order === "string") {
         throw new Error("Order cannot be cancelled.");
@@ -402,13 +407,21 @@ export default class RobinhoodApi {
   }
 
   private async _post<I, R>(url: string, body: I): Promise<R> {
-    const response = await fetch(url, {
+    const request: any = {
       method: "POST",
       headers: this.headers,
-      body: JSON.stringify(body),
-    });
+    };
+    if (body != null && Object.keys(body).length > 0) {
+      request.body = JSON.stringify(body);
+    }
+
+    const response = await fetch(url, request);
     if (!response.ok) {
-      throw new Error("Failed to post data: " + JSON.stringify(response));
+      throw new Error(
+        `Failed to post data: ${response.status} ${
+          response.statusText
+        }, Body: ${JSON.stringify(await response.text())}`
+      );
     }
     return (await response.json()) as R;
   }
@@ -431,7 +444,9 @@ export default class RobinhoodApi {
     });
     if (!response.ok) {
       throw new Error(
-        "Failed to fetch data: " + JSON.stringify(await response.json())
+        `Failed to fetch data: ${response.status} ${
+          response.statusText
+        }, Body: ${JSON.stringify(await response.text())}`
       );
     }
     return (await response.json()) as T;
