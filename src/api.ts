@@ -116,26 +116,30 @@ export default class RobinhoodApi {
   }
 
   async _place_order(options: RobinhoodOrderOptions): Promise<RobinhoodOrder> {
+    const body = JSON.stringify({
+      account: this.account,
+      instrument: options.instrument.url,
+      price: options.bid_price,
+      quantity: options.quantity,
+      side: options.side,
+      symbol: options.instrument.symbol.toUpperCase(),
+      time_in_force: options.time || "gfd",
+      trigger: options.trigger || "immediate",
+      type: options.type || "market",
+      market_hours: options.market_hours || "regular_hours",
+      order_form_version: 6,
+    });
     const response = await fetch(robinhoodApiBaseUrl + endpoints.orders, {
       method: "POST",
       headers: this.headers,
-      body: JSON.stringify({
-        account: this.account,
-        instrument: options.instrument.url,
-        price: options.bid_price,
-        stop_price: options.stop_price,
-        quantity: options.quantity,
-        side: options.side,
-        symbol: options.instrument.symbol.toUpperCase(),
-        time_in_force: options.time || "gfd",
-        trigger: options.trigger || "immediate",
-        type: options.type || "market",
-        market_hours: options.market_hours || "regular_hours",
-      }),
+      body,
     });
     if (!response.ok) {
       throw new Error(
-        "Failed to place order: " + JSON.stringify(response.json())
+        "Failed to place order: " +
+          response.status +
+          " " +
+          JSON.stringify(response.json())
       );
     }
     return (await response.json()) as RobinhoodOrder;
