@@ -20,6 +20,7 @@ export interface RobinhoodOrderOptions {
   stop_price?: number;
   time?: "gfd" | "gtc";
   trigger?: "immediate" | "stop";
+  market_hours: "extended_hours" | "all_day_hours" | "regular_hours";
 }
 
 export interface RobinhoodWatchlist {}

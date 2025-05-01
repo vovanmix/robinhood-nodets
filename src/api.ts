@@ -130,6 +130,7 @@ export default class RobinhoodApi {
         time_in_force: options.time || "gfd",
         trigger: options.trigger || "immediate",
         type: options.type || "market",
+        market_hours: options.market_hours || "regular_hours",
       }),
     });
     if (!response.ok) {

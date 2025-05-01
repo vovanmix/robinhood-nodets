@@ -1,6 +1,6 @@
 {
   "name": "robinhood-nodets",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Comprehensive TypeScript API wrapper for the Robinhood private API",
   "type": "module",
   "main": "./dist/index.js",
