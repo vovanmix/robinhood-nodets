@@ -11,3 +11,10 @@ Install the package via npm:
 ```bash
 npm install robinhood-nodets
 ```
+
+## Publish
+
+```bash
+npm run build
+npm publish
+```
