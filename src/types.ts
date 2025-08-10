@@ -54,6 +54,30 @@ export interface RobinhoodOrder {
 
 export interface RobinhoodUser {}
 export interface RobinhoodDividend {}
+export interface RobinhoodTransfer {
+  id: string;
+  ref_id: string;
+  url: string;
+  cancel: string | null;
+  ach_relationship: string;
+  account: string;
+  amount: string;
+  direction: "deposit" | "withdraw";
+  state: "completed" | string;
+  fees: string;
+  status_description: string;
+  scheduled: boolean;
+  expected_landing_date: string;
+  early_access_amount: string;
+  created_at: string;
+  updated_at: string;
+  rhs_state: string;
+  expected_sweep_at: string | null;
+  expected_landing_datetime: string;
+  investment_schedule_id: string | null;
+  managed_by_ph: boolean;
+  instant_limit_to_grant: string;
+}
 
 export interface RobinhoodInstrument {
   symbol: string;

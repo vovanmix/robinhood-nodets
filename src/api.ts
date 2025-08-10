@@ -23,6 +23,7 @@ import {
   RobinhoodInstrument,
   RobinhoodWatchlist,
   RobinhoodCryptoHolding,
+  RobinhoodTransfer,
 } from "./types.js";
 
 export default class RobinhoodApi {
@@ -53,6 +54,12 @@ export default class RobinhoodApi {
 
   async dividends(): Promise<RobinhoodDividend[]> {
     const url = robinhoodApiBaseUrl + endpoints.dividends;
+    const params = new URLSearchParams();
+    return this._fetchList(url, params);
+  }
+
+  async transfers(): Promise<RobinhoodTransfer[]> {
+    const url = robinhoodApiBaseUrl + endpoints.ach_transfers;
     const params = new URLSearchParams();
     return this._fetchList(url, params);
   }
